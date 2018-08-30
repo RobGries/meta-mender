@@ -1,0 +1,132 @@
+From 4f9aa26f895b19e7891273d27d468e533bf9878d Mon Sep 17 00:00:00 2001
+From: Drew Moseley <drew.moseley@northern.tech>
+Date: Fri, 9 Feb 2018 15:03:00 -0500
+Subject: [PATCH] u-boot-overo: Mender autoconfiguration
+
+Signed-off-by: Drew Moseley <drew.moseley@northern.tech>
+---
+ configs/omap3_overo_defconfig     |  1 +
+ include/configs/omap3_overo.h     | 43 +++++++--------------------------------
+ include/configs/ti_armv7_common.h |  4 ++--
+ 3 files changed, 10 insertions(+), 38 deletions(-)
+
+diff --git a/configs/omap3_overo_defconfig b/configs/omap3_overo_defconfig
+index 4c2a17d96b..1e9b669f1d 100644
+--- a/configs/omap3_overo_defconfig
++++ b/configs/omap3_overo_defconfig
+@@ -11,3 +11,4 @@ CONFIG_CMD_GPIO=y
+ # CONFIG_CMD_SETEXPR is not set
+ # CONFIG_CMD_NFS is not set
+ CONFIG_SYS_NS16550=y
++CONFIG_MMC=y
+diff --git a/include/configs/omap3_overo.h b/include/configs/omap3_overo.h
+index 3b1e5d7ff8..9c3ce5568f 100644
+--- a/include/configs/omap3_overo.h
++++ b/include/configs/omap3_overo.h
+@@ -30,7 +30,10 @@
+ 
+ /* override size of malloc() pool */
+ #undef CONFIG_SYS_MALLOC_LEN
+-#define CONFIG_ENV_SIZE		(128 << 10)	/* 128 KiB sector */
++#define CONFIG_BOOTCOUNT_LIMIT
++#define CONFIG_BOOTCOUNT_ENV
++#define CONFIG_CMD_EXT4
++#define CONFIG_ENV_SIZE 0x20000
+ /* Shift 128 << 15 provides 4 MiB heap to support UBI commands.
+  * Shift 128 << 10 provides 128 KiB heap for limited-memory devices. */
+ #define CONFIG_SYS_MALLOC_LEN	(CONFIG_ENV_SIZE + (128 << 15))
+@@ -114,7 +117,7 @@
+ 		"vram=${vram} " \
+ 		"omapfb.mode=dvi:${dvimode} " \
+ 		"omapdss.def_disp=${defaultdisplay} " \
+-		"root=${mmcroot} " \
++		"" \
+ 		"rootfstype=${mmcrootfstype}\0" \
+ 	"nandargs=setenv bootargs console=${console} " \
+ 		"${optargs} " \
+@@ -122,7 +125,7 @@
+ 		"vram=${vram} " \
+ 		"omapfb.mode=dvi:${dvimode} " \
+ 		"omapdss.def_disp=${defaultdisplay} " \
+-		"root=${nandroot} " \
++		"" \
+ 		"rootfstype=${nandrootfstype}\0" \
+ 	"loadbootscript=load mmc ${mmcdev} ${loadaddr} boot.scr\0" \
+ 	"bootscript=echo Running boot script from mmc ...; " \
+@@ -154,37 +157,6 @@
+ 		"run loadubizimage; "\
+ 		"bootz ${loadaddr} - ${fdtaddr}\0" \
+ 
+-#define CONFIG_BOOTCOMMAND \
+-	"mmc dev ${mmcdev}; if mmc rescan; then " \
+-		"if run loadbootscript; then " \
+-			"run bootscript; " \
+-		"fi;" \
+-		"if run loadbootenv; then " \
+-			"echo Loaded environment from ${bootenv};" \
+-			"run importbootenv;" \
+-		"fi;" \
+-		"if test -n $uenvcmd; then " \
+-			"echo Running uenvcmd ...;" \
+-			"run uenvcmd;" \
+-		"fi;" \
+-		"if run loaduimage; then " \
+-			"run mmcboot;" \
+-		"fi;" \
+-		"if run loadzimage; then " \
+-			"if test -z \"${fdtfile}\"; then " \
+-				"setenv fdtfile omap3-${boardname}-${expansionname}.dtb;" \
+-			"fi;" \
+-			"if run loadfdt; then " \
+-				"run mmcbootfdt;" \
+-			"fi;" \
+-		"fi;" \
+-	"fi;" \
+-	"run nandboot; " \
+-	"if test -z \"${fdtfile}\"; then "\
+-		"setenv fdtfile omap3-${boardname}-${expansionname}.dtb;" \
+-	"fi;" \
+-	"run nanddtsboot; " \
+-
+ /* memtest works on */
+ #define CONFIG_SYS_MEMTEST_START	(OMAP34XX_SDRC_CS0)
+ #define CONFIG_SYS_MEMTEST_END		(OMAP34XX_SDRC_CS0 + \
+@@ -199,12 +171,11 @@
+ #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
+ #define CONFIG_SYS_ONENAND_BASE		ONENAND_MAP
+ 
+-#define CONFIG_ENV_IS_IN_NAND
++#define CONFIG_ENV_IS_IN_MMC
+ #define ONENAND_ENV_OFFSET		0x240000 /* environment starts here */
+ #define SMNAND_ENV_OFFSET		0x240000 /* environment starts here */
+ 
+ #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB */
+-#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
+ #define CONFIG_ENV_ADDR			SMNAND_ENV_OFFSET
+ 
+ /* Configure SMSC9211 ethernet */
+diff --git a/include/configs/ti_armv7_common.h b/include/configs/ti_armv7_common.h
+index 6d08bde620..13e638cc5f 100644
+--- a/include/configs/ti_armv7_common.h
++++ b/include/configs/ti_armv7_common.h
+@@ -63,7 +63,7 @@
+ 	"finduuid=part uuid mmc 0:2 uuid\0" \
+ 	"args_mmc=run finduuid;setenv bootargs console=${console} " \
+ 		"${optargs} " \
+-		"root=PARTUUID=${uuid} rw " \
++		"rw " \
+ 		"rootfstype=${mmcrootfstype}\0"
+ 
+ /*
+@@ -265,7 +265,7 @@
+ 	"netloadfdt=tftp ${fdtaddr} ${fdtfile}\0" \
+ 	"netargs=setenv bootargs console=${console} " \
+ 		"${optargs} " \
+-		"root=/dev/nfs " \
++		"" \
+ 		"nfsroot=${serverip}:${rootpath},${nfsopts} rw " \
+ 		"ip=dhcp\0" \
+ 	"netboot=echo Booting from network ...; " \
+-- 
+2.11.0
+
