@@ -1,0 +1,27 @@
+From 98287c843dfddec7c9a9de073bfc1712233810f5 Mon Sep 17 00:00:00 2001
+From: Rob Gries <bob2600@gmail.com>
+Date: Tue, 27 Feb 2018 09:41:21 -0500
+Subject: [PATCH] modified CONFIG_MENDER_BOOTCOMMAND to toggle gpio-leds
+ 21,22,23
+
+---
+ include/env_mender.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/include/env_mender.h b/include/env_mender.h
+index 71272ca..530d96f 100644
+--- a/include/env_mender.h
++++ b/include/env_mender.h
+@@ -87,6 +87,9 @@
+     "fi\0"
+ 
+ #define CONFIG_MENDER_BOOTCOMMAND                                       \
++    "gpio toggle 21; "                                                  \
++    "gpio toggle 22; "                                                  \
++    "gpio toggle 23; "                                                  \
+     "run mender_setup; "                                                \
+     "setenv bootargs root=${mender_kernel_root} ${bootargs}; "          \
+     "if test \"${fdt_addr_r}\" != \"\"; then "                          \
+-- 
+2.7.4
+
